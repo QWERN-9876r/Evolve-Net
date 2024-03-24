@@ -4,10 +4,10 @@ import { __dirname } from '../__dirname.js'
 
 export class ConfigController {
     #path = ''
-    #data = new Object
+    #data = new Object()
     constructor(path = join(__dirname, '..', 'blockchain.conf.json')) {
         this.#path = path
-        this.#data = path ? JSON.parse(readFileSync(path, 'utf-8') || '{}') : new Object
+        this.#data = path ? JSON.parse(readFileSync(path, 'utf-8') || '{}') : new Object()
     }
     #writeInFile() {
         return new Promise(res => {
@@ -22,8 +22,7 @@ export class ConfigController {
     }
     add(key, value) {
         this.#data[key] = value
-        if ( !this.#path )
-            return this.create(JSON.stringify(this.#data))
+        if (!this.#path) return this.create(JSON.stringify(this.#data))
 
         return this.#writeInFile()
     }

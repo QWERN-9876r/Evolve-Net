@@ -4,33 +4,34 @@ import { createServer } from 'node:http'
 import { ConfigController } from './controllers/configController.js'
 import { NodesController } from './controllers/nodesControllers.js'
 import { SmartContractsController } from './controllers/smartContractsController.js'
-import { Block, Blockchain, sha256 } from './index.js'
+import { Block, Blockchain } from './index.js'
 import Client from 'socket.io-client'
 import { MessagesSet } from './helpers/messagesSet.js'
 import { verifySignature } from './digitalSignature.js'
 import { KeysController } from './controllers/keysController.js'
 import { RSA } from './RSA.js'
+import colors from 'colors'
 
 const rl = readline.createInterface({
     input: process.stdin,
-    output: process.stdout
+    output: process.stdout,
 })
-const nodesController = new NodesController
-const smartContractsController = new SmartContractsController
-const configController = new ConfigController
-const messagesSet = new MessagesSet
-const keysController = new KeysController
+const nodesController = new NodesController()
+const smartContractsController = new SmartContractsController()
+const configController = new ConfigController()
+const messagesSet = new MessagesSet()
+const keysController = new KeysController()
 const server = createServer()
 const io = new Server(server)
 
 export class P2P {
-    #blockchain = new Blockchain
+    #blockchain = new Blockchain()
 
-    #sendRequest(node, {type, data}) {
+    #sendRequest(node, { type, data }) {
         const ws = new Client(`ws://${node.ip}:${node.port}`)
         const id = keysController.getPublicKey() || new RSA().getPublicKey()
 
-        ws.emit(type, JSON.stringify({data, id}))
+        ws.emit(type, JSON.stringify({ data, id }))
     }
 
     #sendAll(type, data) {
@@ -38,75 +39,92 @@ export class P2P {
         // console.log('send\n', data)
 
         messagesSet.add(data)
-        io.sockets.emit(type, JSON.stringify({data, id}))
+        io.sockets.emit(type, JSON.stringify({ data, id }))
     }
 
     #onSendBlock(json) {
-        const {id, data} = JSON.parse(json)
+        const { id, data } = JSON.parse(json)
         const block = new Block(data)
-        // console.log('get\n', data)
 
-        if ( messagesSet.has(block) ) return
-
-        // console.log('id:', id)
-        // console.log('Отправил блок:\n', block)
+        if (messagesSet.has(block)) return
 
         this.#blockchain.addBlock(block)
         messagesSet.add(block)
         this.#sendAll('sendBlock', block)
     }
-    #onSendContract(data) {
-        const {data: contract, id} = JSON.parse(data)
-        if ( messagesSet.has(contract) ) return
 
-        smartContractsController.addContract({
-            name: sha256(contract),
-            code: contract
-        })
+    #onSendContract(data) {
+        const { data: contract } = JSON.parse(data)
+        console.log(contract)
+        if (messagesSet.has(contract)) return
+
+        smartContractsController.addContract(contract)
         this.#sendAll('sendContract', contract)
         messagesSet.add(contract)
     }
-    #onGetBlockchainHash({utf8Data: {id}}) {
+    #onGetBlockchainHash(json) {
+        const { id } = JSON.parse(json)
+        const node = nodesController.getNodeById(id)
 
+        if (!node) {
+            console.error(
+                'Нода отправившая запрос на получение хеша блокчейна отсутствует в списке нод'.italic.bold.red,
+            )
+            return
+        }
+
+        this.#sendRequest(node, { type: 'sendBlockchainHash', data: this.#blockchain.getHash() })
     }
 
     #getBlockchain(node) {
         return new Promise((res, rej) => {
-            this.#sendRequest(node, {type: 'getBlockchain', data: ''})
+            this.#sendRequest(node, { type: 'getBlockchain', data: '' })
             const timeout = setTimeout(rej, configController.getData().maxTimeForDonloadBlockchain || 30_000)
 
-            io.on('sendBlockchain', ({utf8Data: blockchainJSON}) => {
+            io.on('sendBlockchain', json => {
+                const {
+                    id,
+                    data: { signature, blockchainJSON },
+                } = JSON.parse(json)
+                if (
+                    !id ||
+                    !signature ||
+                    !blockchainJSON ||
+                    id !== node.id ||
+                    !verifySignature(signature, blockchainJSON, node.id)
+                )
+                    return
                 clearTimeout(timeout)
                 res(new Blockchain(blockchainJSON))
             })
         })
     }
 
-    #getNodesId() {
-        const requests = new Array
+    // #getNodesId() {
+    //     const requests = new Array()
 
-        for ( const node of nodesController.getNodes() ) {
-            if ( 'id' in node ) continue
+    //     for (const node of nodesController.getNodes()) {
+    //         if ('id' in node) continue
 
-            this.#sendRequest(node, {
-                type: 'getId',
-                data: ''
-            })
-            requests.push(
-                new Promise( res => {
-                    io.on('sendId', ({utf8Data: {id}}) => {
-                        nodesController.changeNodeInfo(node, {id})
-                        res()
-                    })
-                })
-            )
-        }
+    //         this.#sendRequest(node, {
+    //             type: 'getId',
+    //             data: '',
+    //         })
+    //         requests.push(
+    //             new Promise(res => {
+    //                 io.on('sendId', ({ utf8Data: { id } }) => {
+    //                     nodesController.changeNodeInfo(node, { id })
+    //                     res()
+    //                 })
+    //             }),
+    //         )
+    //     }
 
-        return Promise.all(requests)
-    }
+    //     return Promise.all(requests)
+    // }
 
     constructor(blockchain) {
-        const configController = new ConfigController
+        const configController = new ConfigController()
         const config = configController.getData()
 
         this.#blockchain = blockchain
@@ -125,46 +143,62 @@ export class P2P {
         this.#sendAll('sendContract', contract)
     }
     async getBlockchain() {
-        const responses = new Array(nodesController.getNumberOfNodes()).fill(new Object).map(() => new Promise(() => {}))
+        const responses = new Array(nodesController.getNumberOfNodes()).fill(new Object()).map(
+            () =>
+                new Promise((res, rej) => {
+                    setTimeout(rej, 10_000)
+                }),
+        )
+        const responsesObject = new Object()
         let i = 0
-        io.on('sendBlockchainHash', data => {
+        io.on('sendBlockchainHash', json => {
             try {
-                const {id, signature, hash} = JSON.parse(data.utf8Data)
+                const {
+                    id,
+                    data: { signature, hash },
+                } = JSON.parse(json)
 
                 if (!verifySignature(signature, hash, id)) {
-                    console.log('От одной из нод пришел ответ с неправильное подписью')
+                    console.log('От одной из нод пришел ответ с неправильное подписью'.italic.bold.brightRed)
+                }
+
+                if (id in responsesObject) {
+                    if (hash === responsesObject[id]) return
+                    console.log(
+                        '\x1b[31mОт одной и той же ноды пришло два валидных ответа с разными данными!\x1b[31m'.italic
+                            .bold.brightRed,
+                    )
                 }
 
                 responses[i++] = Promise.resolve(hash)
-
+                responsesObject[id] = hash
             } catch (err) {
                 console.error('При получение хэша блокчейна произошла ошибка: ', err)
             }
-
         })
         this.#sendAll('getBlockchainHash', '')
         const node = nodesController.getReliableNode()
         let blockchain, allResponses
 
         try {
-            [blockchain, allResponses] = await Promise.all([this.#getBlockchain(node), Promise.all(responses)])
+            ;[blockchain, allResponses] = await Promise.all([this.#getBlockchain(node), Promise.all(responses)])
         } catch {
             nodesController.markNodeAsUnreliable(node)
             return this.getBlockchain()
         }
-        const hashes = new Object
+        const hashes = new Object()
 
-        for ( const response of allResponses ) {
+        for (const response of allResponses) {
             hashes[response] = response in hashes ? hashes[response] + 1 : 1
         }
         const bestHash = hashes[allResponses[0]]
-        for ( const [key, value] of Object.entries(hashes) ) {
-            if ( value > hashes[bestHash] ) {
+        for (const [key, value] of Object.entries(hashes)) {
+            if (value > hashes[bestHash]) {
                 bestHash = key
             }
         }
 
-        if ( blockchain.getRoot().toString('hex') !== bestHash ) {
+        if (blockchain.getRoot().toString('hex') !== bestHash) {
             nodesController.markNodeAsUnreliable(node)
             return this.getBlockchain()
         }
@@ -175,7 +209,7 @@ export class P2P {
     }
     async connect() {
         if (this.hasConnect) return
-        if ( !this.has ) await getServer(this)
+        if (!this.has) await getServer(this)
 
         if (nodesController.getNodes().next().done) await getNodeForConnection()
 
@@ -183,22 +217,34 @@ export class P2P {
             io.on('connect', res)
         })
         const connctToNodePromises = []
-        for ( const node of nodesController.getNodes() ) {
-            connctToNodePromises.push(new Promise(res => {
-                const ws = new Client(`ws://${node.ip}:${node.port}`)
+        for (const node of nodesController.getNodes()) {
+            connctToNodePromises.push(
+                new Promise(res => {
+                    const ws = new Client(`ws://${node.ip}:${node.port}`)
 
-                ws.on('connect', () => {
-                    ws.on('sendContract', this.#onSendContract.bind(this))
-                    ws.on('sendBlock', this.#onSendBlock.bind(this))
-                    ws.on('getBlockchainHash', this.#onGetBlockchainHash.bind(this))
+                    ws.on('connect', () => {
+                        ws.on('sendContract', this.#onSendContract.bind(this))
+                        ws.on('sendBlock', this.#onSendBlock.bind(this))
+                        ws.on('getBlockchainHash', this.#onGetBlockchainHash.bind(this))
+                        ws.on('getId', () => {
+                            const id = keysController.getPublicKey() || new RSA().getPublicKey()
+                            ws.emit('sendId', JSON.stringify({ id }))
+                        })
 
-                    console.log(`connection to node ws://${node.ip}:${node.port}`)
-                    res()
-                })
-            }))
+                        ws.emit('getId', '')
+                        ws.on('sendId', json => {
+                            const { id } = JSON.parse(json)
+                            nodesController.changeNodeInfo(node, { id })
+                        })
+
+                        console.log(`connection to node ws://${node.ip}:${node.port}`)
+                        res()
+                    })
+                }),
+            )
         }
         io.listen(this.port, () => {
-            console.log('\x1b[97mconnect to blockchain with port\x1b[0m ' + this.port)
+            console.log('connect to blockchain with port'.white + ' ' + this.port)
         })
 
         this.hasConnect = true
@@ -214,6 +260,7 @@ function getServer(server) {
                 server.ip = ip
                 server.port = Number(port)
                 server.has = true
+                rl.close()
                 res()
             })
         })
@@ -226,24 +273,11 @@ function getNodeForConnection() {
             rl.question('Enter node port: ', port => {
                 nodesController.addNode({
                     ip,
-                    port: Number(port) || 80
+                    port: Number(port) || 80,
                 })
+                rl.close()
                 res()
             })
         })
     })
 }
-
-const p2p = new P2P(new Blockchain())
-await p2p.connect()
-// function f() {
-//     rl.question('Send block?', ans => {
-//         if (ans.toLowerCase()[0] === 'y') p2p.sendBlock(new Block({
-//             data: {transactions: [{from: 'Dima', to: 'Not bot Dima', amount: 10, currency: 'BTC'}]},
-//             date: String(Date.now()),
-//             previousHash: 'hash'
-//         }))
-//         setTimeout(f, 2000)
-//     })
-// }
-// f()

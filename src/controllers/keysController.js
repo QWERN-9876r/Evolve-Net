@@ -1,7 +1,7 @@
-import { readFileSync } from "node:fs"
-import { join } from "node:path"
-import { __dirname } from "../__dirname.js"
-import { writeFile } from "node:fs/promises"
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { __dirname } from '../__dirname.js'
+import { writeFile } from 'node:fs/promises'
 
 let privateKey = ''
 let publicKey = ''
@@ -9,26 +9,26 @@ let publicKey = ''
 export class KeysController {
     getPrivateKey() {
         try {
-            if ( !privateKey ) privateKey = readFileSync(join(__dirname, '..', 'data', 'privateKey.key'), 'utf-8')
+            if (!privateKey) privateKey = readFileSync(join(__dirname, '..', 'data', 'privateKey.key'), 'utf-8')
         } catch {
             return ''
         }
         return privateKey
-        .split('-----BEGIN RSA PRIVATE KEY-----\n')[1]
-        .split('-----END RSA PRIVATE KEY-----')[0]
-        .replaceAll('\n', '')
+        // .split('-----BEGIN RSA PRIVATE KEY-----\n')[1]
+        // .split('-----END RSA PRIVATE KEY-----')[0]
+        // .replaceAll('\n', '')
     }
 
     getPublicKey() {
         try {
-            if ( !publicKey ) publicKey = readFileSync(join(__dirname, '..', 'data', 'publicKey.key'), 'utf-8')
+            if (!publicKey) publicKey = readFileSync(join(__dirname, '..', 'data', 'publicKey.key'), 'utf-8')
         } catch {
             return ''
         }
         return publicKey
-        .split('-----BEGIN RSA PUBLIC KEY-----\n')[1]
-        .split('-----END RSA PUBLIC KEY-----')[0]
-        .replaceAll('\n', '')
+            .split('-----BEGIN RSA PUBLIC KEY-----\n')[1]
+            .split('-----END RSA PUBLIC KEY-----')[0]
+            .replaceAll('\n', '')
     }
 
     setPublicKey(key) {

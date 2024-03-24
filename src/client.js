@@ -8,7 +8,7 @@ import { __dirname } from './__dirname.js'
 const blockChainDataPath = join(__dirname, '..', 'data', 'blockChainData.json')
 const rl = readline.createInterface({
     input: process.stdin,
-    output: process.stdout
+    output: process.stdout,
 })
 
 let blockchain

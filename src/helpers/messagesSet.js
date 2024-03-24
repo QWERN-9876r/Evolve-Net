@@ -1,9 +1,9 @@
-import { sha256 } from "../index.js"
+import { sha256 } from '../index.js'
 
 export class MessagesSet {
     #messages
     constructor() {
-        this.#messages = new Set
+        this.#messages = new Set()
     }
 
     add(message) {

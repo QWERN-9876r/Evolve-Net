@@ -1,14 +1,18 @@
-import { readFileSync, writeFile } from "node:fs"
-import { join } from "node:path"
-import { __dirname } from "../__dirname.js"
+import { readFileSync } from 'node:fs'
+import { join } from 'node:path'
+import { __dirname } from '../__dirname.js'
 
-let store = new Array
+let store = new Array()
+const storeTable = new Object()
 const pathToFile = join(__dirname, '..', 'data', 'nodes.json')
 
 export class NodesController {
     #downloadDataFromFile() {
         try {
-            store = JSON.parse(readFileSync(pathToFile, 'utf8')) || new Array
+            store = JSON.parse(readFileSync(pathToFile, 'utf8')) || new Array()
+            for (const node of store) {
+                storeTable[node.id] = node
+            }
         } catch {}
     }
 
@@ -21,6 +25,11 @@ export class NodesController {
     getNodes() {
         if (!store.length) this.#downloadDataFromFile()
         return store[Symbol.iterator]()
+    }
+
+    getNodeById(id) {
+        if (!store.length) this.#downloadDataFromFile()
+        return storeTable[id]
     }
 
     getNumberOfNodes() {
@@ -44,14 +53,14 @@ export class NodesController {
     }
 
     getReliableNode() {
-        for ( const node of store ) {
-            if (!node.unreliable ) return node
+        for (const node of store) {
+            if (!node.unreliable) return node
         }
         return null
     }
 
     changeNodeInfo(node, changes) {
-        for ( const [key, value] of Object.entries(changes) ) {
+        for (const [key, value] of Object.entries(changes)) {
             node[key] = value
         }
         return this.#saveDataToFile()
