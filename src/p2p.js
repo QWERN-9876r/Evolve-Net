@@ -4,13 +4,14 @@ import { createServer } from 'node:http'
 import { ConfigController } from './controllers/configController.js'
 import { NodesController } from './controllers/nodesControllers.js'
 import { SmartContractsController } from './controllers/smartContractsController.js'
-import { Block, Blockchain } from './index.js'
+import { Blockchain } from './index.js'
 import Client from 'socket.io-client'
 import { MessagesSet } from './helpers/messagesSet.js'
 import { verifySignature } from './digitalSignature.js'
 import { KeysController } from './controllers/keysController.js'
 import { RSA } from './RSA.js'
 import colors from 'colors'
+import { Block } from './block.js'
 
 const rl = readline.createInterface({
     input: process.stdin,
@@ -36,14 +37,13 @@ export class P2P {
 
     #sendAll(type, data) {
         const id = keysController.getPublicKey() || new RSA().getPublicKey()
-        // console.log('send\n', data)
 
         messagesSet.add(data)
         io.sockets.emit(type, JSON.stringify({ data, id }))
     }
 
     #onSendBlock(json) {
-        const { id, data } = JSON.parse(json)
+        const { data } = JSON.parse(json)
         const block = new Block(data)
 
         if (messagesSet.has(block)) return
@@ -55,7 +55,7 @@ export class P2P {
 
     #onSendContract(data) {
         const { data: contract } = JSON.parse(data)
-        console.log(contract)
+
         if (messagesSet.has(contract)) return
 
         smartContractsController.addContract(contract)
@@ -100,28 +100,31 @@ export class P2P {
         })
     }
 
-    // #getNodesId() {
-    //     const requests = new Array()
+    #getNodesId() {
+        const requests = new Array()
 
-    //     for (const node of nodesController.getNodes()) {
-    //         if ('id' in node) continue
+        for (const node of nodesController.getNodes()) {
+            if ('id' in node) continue
 
-    //         this.#sendRequest(node, {
-    //             type: 'getId',
-    //             data: '',
-    //         })
-    //         requests.push(
-    //             new Promise(res => {
-    //                 io.on('sendId', ({ utf8Data: { id } }) => {
-    //                     nodesController.changeNodeInfo(node, { id })
-    //                     res()
-    //                 })
-    //             }),
-    //         )
-    //     }
+            this.#sendRequest(node, {
+                type: 'getId',
+                data: '',
+            })
+            requests.push(
+                new Promise(res => {
+                    const ws = new Client(`ws://${node.ip}:${node.port}`)
 
-    //     return Promise.all(requests)
-    // }
+                    ws.on('sendId', json => {
+                        const { id } = JSON.parse(json)
+                        nodesController.changeNodeInfo(node, { id })
+                        res()
+                    })
+                }),
+            )
+        }
+
+        return Promise.all(requests)
+    }
 
     constructor(blockchain) {
         const configController = new ConfigController()
@@ -228,7 +231,7 @@ export class P2P {
                         ws.on('getBlockchainHash', this.#onGetBlockchainHash.bind(this))
                         ws.on('getId', () => {
                             const id = keysController.getPublicKey() || new RSA().getPublicKey()
-                            ws.emit('sendId', JSON.stringify({ id }))
+                            io.emit('sendId', JSON.stringify({ id }))
                         })
 
                         ws.emit('getId', '')

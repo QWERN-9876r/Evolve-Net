@@ -1,9 +1,9 @@
 export default async function(ctx) {
 	ctx.transfer({
-		from: ctx.initiator,
-		to: ctx.owner,
-		coin: "BTC",
-		amount: 10
+		from: "0x000",
+		to: ctx.initiator,
+		coin: "JSC",
+		amount: 50
 	})
 
 	return true

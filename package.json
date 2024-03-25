@@ -16,15 +16,12 @@
         "merkletreejs": "^0.3.11",
         "node-gyp": "^10.0.1",
         "node-rsa": "^1.1.1",
-        "prettier": "^3.2.5",
         "socket.io": "^4.7.4",
         "socket.io-client": "^4.7.4",
-        "terser": "^5.29.2",
-        "ws": "^8.14.2"
+        "terser": "^5.29.2"
     },
     "devDependencies": {
-        "@types/node": "^20.10.6",
-        "@types/websocket": "^1.0.10"
+        "prettier": "^3.2.5"
     },
     "volta": {
         "node": "20.11.1"

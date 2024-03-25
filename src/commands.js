@@ -1,4 +1,3 @@
-import { Block } from './index.js'
 import { P2P } from './p2p.js'
 import { SmartContractsController } from './controllers/smartContractsController.js'
 import { __dirname } from './__dirname.js'
@@ -45,6 +44,12 @@ export const getCommands = blockchain => {
         createWallet() {
             console.log('this command is already not created')
         },
+        async getBalances() {
+            console.log(blockchain.getBalances())
+        },
+        getBalance(wallet) {
+            console.log(blockchain.getBalances()[wallet])
+        },
         exit: null,
     }
     return commands
@@ -59,7 +64,9 @@ export const getWriteCommand = (commands, rl) => {
         } else {
             console.log('Not valid command')
         }
-        rl.question('Command ', writeCommand)
+        rl.question('\n', writeCommand)
     }
     return writeCommand
 }
+
+export async function addContract() {}

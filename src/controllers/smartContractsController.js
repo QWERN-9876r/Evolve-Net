@@ -4,17 +4,15 @@ import { __dirname } from '../__dirname.js'
 import { writeFile } from 'node:fs'
 import colors from 'colors'
 
-const contracts = new Array()
+let contracts = new Array()
 const store = new Object()
 
 export class SmartContractsController {
     #downloadDataFromFolder() {
         try {
-            contracts =
-                contracts ||
-                JSON.parse(readdirSync(join(__dirname, '..', 'data', 'smartContracts'))).map(name =>
-                    name.slice(0, name.length - 3),
-                )
+            contracts = readdirSync(join(__dirname, '..', 'data', 'smartContracts')).map(name =>
+                name.slice(0, name.length - 3),
+            )
         } catch {}
     }
     #checkOnValid(contract) {
@@ -37,12 +35,13 @@ export class SmartContractsController {
         if (!contracts.length) {
             this.#downloadDataFromFolder()
         }
+
         if (!contracts.includes(name)) return null
         if (name in store) return store[name]
 
-        const contract = await import(join(__dirname, '..', 'data', 'smartContracts', `${name}.js`))
-        store[name] = contract
+        const contract = await import(join('..', '..', 'data', 'smartContracts', `${name}.js`))
+        store[name] = contract.default
 
-        return contract
+        return contract.default
     }
 }

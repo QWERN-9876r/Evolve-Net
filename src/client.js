@@ -19,6 +19,6 @@ try {
 }
 const writeCommand = getWriteCommand(getCommands(blockchain), rl)
 
-rl.question('Command ', writeCommand)
+rl.question('\n', writeCommand)
 
-writeFileSync(blockChainDataPath, JSON.stringify(blockchain.blocks), 'utf-8')
+writeFileSync(blockChainDataPath, JSON.stringify(blockchain), 'utf-8')
