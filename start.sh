@@ -1,4 +1,4 @@
 #!/bin/bash
 npm run client
 
-npm ci
+# npm ci

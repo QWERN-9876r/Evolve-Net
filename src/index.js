@@ -1,13 +1,10 @@
 import { createHash } from 'node:crypto'
-import { writeFile } from 'node:fs'
 import { createMerkleTree } from './merkelTree.js'
 import { Context } from './context.js'
 import colors from 'colors'
 import genesisBlock from './genesis.js'
 import { Transaction } from './transaction.js'
 import { Block } from './block.js'
-import { DigitalSignature } from './digitalSignature.js'
-import { KeysController } from './controllers/keysController.js'
 
 export function sha256(value) {
     return createHash('sha256').update(value).digest('hex')
@@ -22,6 +19,9 @@ export class Blockchain {
     }
 
     #changed = false
+    #listeners = {
+        change: blockchain => {}
+    }
 
     async #calcBalances() {
         this.#changed = false
@@ -83,7 +83,7 @@ export class Blockchain {
         return this.getHash()
     }
     toJSON() {
-        return this.#blocks.map(JSON.stringify)
+        return this.#blocks
     }
 
     async getBalanses() {
@@ -112,21 +112,25 @@ export class Blockchain {
 
     addBlock(block) {
         this.#changed = true
+        this.#listeners.change(this)
         block.previousHash = String(this.#blocks.at(-1))
         block.date = block.date || String(Date.now())
         this.#blocks.push(block)
-        writeFile('blockChainData.json', JSON.stringify(this.#blocks), () => {
-            console.log('blockchain has been rewrited'.white)
-        })
     }
 
     getHash() {
         return createMerkleTree(this.#blocks).getRoot().toString('hex')
     }
+
+    on(event, listener) {
+        this.#listeners[event] = listener
+    }
 }
 // const keysController = new KeysController()
 
-// const blockchain = new Blockchain()
+// import { BlockchainController } from './controllers/blockchainController.js'
+
+// const blockchain = new BlockchainController().get()
 // const transaction1 = new Transaction({
 //     contractName: '59b7439b463772aeb8bd92484f7b222e35992908a41a484a5dc13839c7f67cc8',
 //     initiator: keysController.getPublicKey(),

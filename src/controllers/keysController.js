@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { __dirname } from '../__dirname.js'
 import { writeFile } from 'node:fs/promises'
+import { getDataFolder } from './dataFolderPath.js'
 
 let privateKey = ''
 let publicKey = ''
@@ -9,7 +10,8 @@ let publicKey = ''
 export class KeysController {
     getPrivateKey() {
         try {
-            if (!privateKey) privateKey = readFileSync(join(__dirname, '..', 'data', 'privateKey.key'), 'utf-8')
+            if (!privateKey)
+                privateKey = readFileSync(join(__dirname, '..', getDataFolder(), 'private.key'), 'utf-8')
         } catch {
             return ''
         }
@@ -21,7 +23,7 @@ export class KeysController {
 
     getPublicKey() {
         try {
-            if (!publicKey) publicKey = readFileSync(join(__dirname, '..', 'data', 'publicKey.key'), 'utf-8')
+            if (!publicKey) publicKey = readFileSync(join(__dirname, '..', getDataFolder(), 'public.key'), 'utf-8')
         } catch {
             return ''
         }
@@ -33,10 +35,14 @@ export class KeysController {
 
     setPublicKey(key) {
         publicKey = key
-        return writeFile(join(__dirname, '..', 'data', 'public.key'), key)
+        return writeFile(join(__dirname, '..', getDataFolder(), 'public.key'), key)
     }
     setPrivateKey(key) {
         privateKey = key
-        return writeFile(join(__dirname, '..', 'data', 'private.key'), key)
+        return writeFile(join(__dirname, '..', getDataFolder(), 'private.key'), key)
+    }
+    toExportFormat(key, format) {
+        format = format.toUpperCase()
+        return `-----BEGIN RSA ${format} KEY-----\n` + key + `\n-----END RSA ${format} KEY-----`
     }
 }

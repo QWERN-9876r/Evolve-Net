@@ -8,7 +8,7 @@ export class RSA {
 
     #generateKeyPair() {
         const { publicKey, privateKey } = crypto.generateKeyPairSync('rsa', {
-            modulusLength: 2048,
+            modulusLength: 512,
         })
         this.#privateKey = privateKey.export({ type: 'pkcs1', format: 'pem' })
         this.#publicKey = publicKey.export({ type: 'pkcs1', format: 'pem' })
@@ -19,8 +19,6 @@ export class RSA {
 
         this.#privateKey = privateKey || this.#privateKey || keysController.getPrivateKey()
         this.#publicKey = publicKey || this.#publicKey || keysController.getPublicKey()
-
-        console.log(this.#publicKey)
 
         if (!this.#privateKey || !this.#publicKey) {
             this.#generateKeyPair()

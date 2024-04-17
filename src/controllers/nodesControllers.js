@@ -1,25 +1,26 @@
-import { readFileSync } from 'node:fs'
+import { readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
 import { __dirname } from '../__dirname.js'
+import { getDataFolder } from './dataFolderPath.js'
 
 let store = new Array()
 const storeTable = new Object()
-const pathToFile = join(__dirname, '..', 'data', 'nodes.json')
+const getPathToFile = () => join(__dirname, '..', getDataFolder(), 'nodes.json')
 
 export class NodesController {
     #downloadDataFromFile() {
         try {
-            store = JSON.parse(readFileSync(pathToFile, 'utf8')) || new Array()
+            store = JSON.parse(readFileSync(getPathToFile(), 'utf8')) || new Array()
             for (const node of store) {
-                storeTable[node.id] = node
+                if ( node.id ) storeTable[node.id] = node
             }
         } catch {}
     }
 
     #saveDataToFile() {
-        // writeFile(pathToFile, JSON.stringify(store), () => {
-        //     console.log(`\x1b[97mupdate data about nodes \x1b[0m`)
-        // })
+        writeFileSync(getPathToFile(), JSON.stringify(store), () => {
+            console.log(`\x1b[97mupdate data about nodes \x1b[0m`)
+        })
     }
 
     getNodes() {
@@ -62,6 +63,7 @@ export class NodesController {
     changeNodeInfo(node, changes) {
         for (const [key, value] of Object.entries(changes)) {
             node[key] = value
+            if ( !(node.id in storeTable) ) storeTable[node.id] = node
         }
         return this.#saveDataToFile()
     }

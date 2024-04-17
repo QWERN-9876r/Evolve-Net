@@ -1,4 +1,4 @@
-import { Blockchain } from "./index.js"
+import { Blockchain } from './index.js'
 import { getCommands } from './commands.js'
 import { readFileSync, writeFileSync } from 'node:fs'
 import { join } from 'node:path'
@@ -18,7 +18,7 @@ console.log(process.argv)
 try {
     getCommands(blockchain)[process.argv[2]](...process.argv.slice(2))
 } catch {
-    console.error(`command ${process.argv[2].italic.bold} is not defined`.red);
+    console.error(`command ${process.argv[2].italic.bold} is not defined`.red)
 }
 
 writeFileSync(blockChainDataPath, JSON.stringify(blockchain), 'utf-8')

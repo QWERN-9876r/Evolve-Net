@@ -28,7 +28,8 @@ export class Transaction {
             )
         ) {
             console.error(
-                'The transaction class includes a ContractName parameter of type string and an array of args'.italic.bold.red,
+                'The transaction class includes a ContractName parameter of type string and an array of args'.italic
+                    .bold.red,
             )
             return
         }

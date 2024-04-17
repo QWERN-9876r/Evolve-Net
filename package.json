@@ -5,7 +5,7 @@
     "main": "index.js",
     "type": "module",
     "scripts": {
-        "format": "prettier --write --ignore-path .gitignore .",
+        "format": "npx prettier --write --ignore-path .gitignore ./src",
         "client": "node src/client.js"
     },
     "keywords": [],
@@ -15,7 +15,6 @@
         "colors": "^1.4.0",
         "merkletreejs": "^0.3.11",
         "node-gyp": "^10.0.1",
-        "node-rsa": "^1.1.1",
         "socket.io": "^4.7.4",
         "socket.io-client": "^4.7.4",
         "terser": "^5.29.2"
