@@ -18,7 +18,7 @@ export class Blockchain {
         },
     }
 
-    #changed = false
+    #changed = true
     #listeners = {
         change: blockchain => {}
     }
@@ -86,7 +86,7 @@ export class Blockchain {
         return this.#blocks
     }
 
-    async getBalanses() {
+    async getBalances() {
         if (this.#changed) await this.#calcBalances()
         return this.#balances
     }

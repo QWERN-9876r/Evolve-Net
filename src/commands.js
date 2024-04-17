@@ -58,10 +58,10 @@ export const getCommands = blockchain => {
             console.log('this command is already not created')
         },
         async getBalances() {
-            console.log(blockchain.getBalances())
+            console.log(await blockchain.getBalances())
         },
-        getBalance(wallet) {
-            console.log(blockchain.getBalances()[wallet])
+        async getBalance(wallet) {
+            console.log((await blockchain.getBalances())[wallet])
         },
         connect() {
             return p2p.connect()
