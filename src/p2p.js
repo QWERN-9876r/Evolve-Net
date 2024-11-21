@@ -48,10 +48,10 @@ export class P2P {
         const { data } = JSON.parse(json)
         const block = new Block(data)
 
-        if (messagesSet.has(block)) return
+        if (messagesSet.has(String(block))) return
 
         this.#blockchain.addBlock(block)
-        messagesSet.add(block)
+        messagesSet.add(String(block))
         this.#sendAll('sendBlock', block)
     }
 
