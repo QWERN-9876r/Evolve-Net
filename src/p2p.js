@@ -22,7 +22,6 @@ const nodesController = new NodesController()
 const smartContractsController = new SmartContractsController()
 const configController = new ConfigController()
 const messagesSet = new MessagesSet()
-const keysController = new KeysController()
 const server = createServer()
 const io = new Server(server)
 const connections = new Map()
@@ -32,13 +31,13 @@ export class P2P {
 
     #sendRequest(node, { type, data }) {
         const ws = new Client(`ws://${node.ip}:${node.port}`)
-        const id = keysController.getPublicKey() || new RSA().getPublicKey()
+        const id = KeysController.getPublicKey() || new RSA().getPublicKey()
 
         ws.emit(type, JSON.stringify({ data, id }))
     }
 
     #sendAll(type, data) {
-        const id = keysController.getPublicKey() || new RSA().getPublicKey()
+        const id = KeysController.getPublicKey() || new RSA().getPublicKey()
 
         messagesSet.add(data)
         io.sockets.emit(type, JSON.stringify({ data, id }))
@@ -83,7 +82,7 @@ export class P2P {
     #onGetBlockchain(json) {
         const { data } = JSON.parse(json)
 
-        if ( data.for !== keysController.getPublicKey() ) return
+        if ( data.for !== KeysController.getPublicKey() ) return
 
         const blockchainJSON = JSON.stringify(this.#blockchain)
         const signature = new DigitalSignature(blockchainJSON).export()

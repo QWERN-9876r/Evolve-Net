@@ -15,15 +15,13 @@ export class RSA {
     }
 
     constructor(publicKey, privateKey) {
-        const keysController = new KeysController()
-
-        this.#privateKey = privateKey || this.#privateKey || keysController.getPrivateKey()
-        this.#publicKey = publicKey || this.#publicKey || keysController.getPublicKey()
+        this.#privateKey = privateKey || this.#privateKey || KeysController.getPrivateKey()
+        this.#publicKey = publicKey || this.#publicKey || KeysController.getPublicKey()
 
         if (!this.#privateKey || !this.#publicKey) {
             this.#generateKeyPair()
-            keysController.setPrivateKey(this.#privateKey)
-            keysController.setPublicKey(this.#publicKey)
+            KeysController.setPrivateKey(this.#privateKey)
+            KeysController.setPublicKey(this.#publicKey)
         }
     }
 

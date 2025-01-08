@@ -57,17 +57,12 @@ export class Transaction {
             active: this.#active,
         }
     }
-    fromJSON(json) {
-        const { contractName, signature, initiator, args, contractInfo, active } = JSON.parse(json)
+    static fromJSON(json) {
+        const obj = JSON.parse(json)
 
-        this.#contractName = contractName
-        this.#initiator = initiator
-        this.#signature = signature
-        this.#args = args
-        this.#contractInfo = contractInfo
-        this.#active = active
+        const transaction = new Transaction(obj)
 
-        return this
+        return transaction
     }
 
     get contractName() {
@@ -101,7 +96,4 @@ export class Transaction {
 
         return this.#active
     }
-}
-export function createTransactionFromJSON(json) {
-    return new Transaction(new Object(), true).fromJSON(json)
 }

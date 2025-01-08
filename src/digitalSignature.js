@@ -3,15 +3,13 @@ import { createSign, createVerify } from 'node:crypto'
 import { KeysController } from './controllers/keysController.js'
 import { RSA } from './RSA.js'
 
-const keysController = new KeysController()
-
 export class DigitalSignature {
     #signature = ''
 
     constructor(data, privateKey) {
         const sign = createSign('RSA-SHA256')
 
-        privateKey = privateKey || keysController.getPrivateKey() || new RSA().getPrivateKey()
+        privateKey = privateKey || KeysController.getPrivateKey() || new RSA().getPrivateKey()
 
         sign.update(data, 'utf-8')
         this.#signature = sign.sign(privateKey, 'base64')
@@ -34,7 +32,7 @@ export function verifySignature(signature, data, publicKey) {
 
     verifier.update(data)
 
-    publicKey = keysController.toExportFormat(publicKey, 'public')
+    publicKey = KeysController.toExportFormat(publicKey, 'public')
 
     const verification = verifier.verify(publicKey, signature, 'base64')
 

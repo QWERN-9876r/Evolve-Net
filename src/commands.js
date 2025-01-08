@@ -47,7 +47,7 @@ export const getCommands = blockchain => {
             }
         },
         validate() {
-            console.log(blockchain.isValid())
+            console.log(blockchain.isValid() ? 'Valid' : 'Not Valid')
         },
         help() {
             for (const key of Object.keys(commands).sort((name1, name2) => name1.localeCompare(name2))) {
@@ -75,7 +75,8 @@ export const getCommands = blockchain => {
     }
     function getActionFunction(actionName) {
         return (_, functionName, ...args) => {
-            if (!functionName || !commands[actionName + functionName[0].toUpperCase() + functionName.slice(1)]) return console.error(`Function with name ${functionName} does not exist`.red.bold)
+            if (!functionName || !commands[actionName + functionName[0].toUpperCase() + functionName.slice(1)])
+                return console.error(`Function with name ${functionName} does not exist`.red.bold)
             return commands[actionName + functionName[0].toUpperCase() + functionName.slice(1)](_, ...args)
         }
     }

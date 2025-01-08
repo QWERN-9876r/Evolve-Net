@@ -4,44 +4,42 @@ import { __dirname } from '../__dirname.js'
 import { writeFile } from 'node:fs/promises'
 import { getDataFolder } from './dataFolderPath.js'
 
-let privateKey = ''
-let publicKey = ''
-
 export class KeysController {
-    getPrivateKey() {
+    static #privateKey = ''
+    static #publicKey = ''
+
+    static getPrivateKey() {
         try {
-            if (!privateKey)
-                privateKey = readFileSync(join(__dirname, '..', getDataFolder(), 'private.key'), 'utf-8')
+            if (!this.#privateKey)
+                this.#privateKey = readFileSync(join(__dirname, '..', getDataFolder(), 'private.key'), 'utf-8')
         } catch {
             return ''
         }
-        return privateKey
-        // .split('-----BEGIN RSA PRIVATE KEY-----\n')[1]
-        // .split('-----END RSA PRIVATE KEY-----')[0]
-        // .replaceAll('\n', '')
+        return this.#privateKey
     }
 
-    getPublicKey() {
+    static getPublicKey() {
         try {
-            if (!publicKey) publicKey = readFileSync(join(__dirname, '..', getDataFolder(), 'public.key'), 'utf-8')
+            if (!this.#publicKey)
+                this.#publicKey = readFileSync(join(__dirname, '..', getDataFolder(), 'public.key'), 'utf-8')
         } catch {
             return ''
         }
-        return publicKey
+        return this.#publicKey
             .split('-----BEGIN RSA PUBLIC KEY-----\n')[1]
             .split('-----END RSA PUBLIC KEY-----')[0]
             .replaceAll('\n', '')
     }
 
-    setPublicKey(key) {
-        publicKey = key
+    static setPublicKey(key) {
+        this.#publicKey = key
         return writeFile(join(__dirname, '..', getDataFolder(), 'public.key'), key)
     }
-    setPrivateKey(key) {
-        privateKey = key
+    static setPrivateKey(key) {
+        this.#privateKey = key
         return writeFile(join(__dirname, '..', getDataFolder(), 'private.key'), key)
     }
-    toExportFormat(key, format) {
+    static toExportFormat(key, format) {
         format = format.toUpperCase()
         return `-----BEGIN RSA ${format} KEY-----\n` + key + `\n-----END RSA ${format} KEY-----`
     }

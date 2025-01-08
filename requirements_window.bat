@@ -9,4 +9,6 @@ node -v
 
 npm -v
 
+mkdir ./data
+
 npm ci

@@ -7,4 +7,6 @@ nvm install 20
 
 npm ci
 
+mkdir ./data
+
 echo "Installing requirements are completed"
